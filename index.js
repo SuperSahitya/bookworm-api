@@ -164,9 +164,15 @@ app.get("/cart", async (req, res) => {
   const cartCollection = db.collection("cart");
   const userCollection = db.collection("users");
   const token = req.cookies.token;
-  const { email } = jwt.verify(token, SECRET_KEY);
   if (!token) {
     return res.status(401).send("Authentication required");
+  }
+  let email;
+  try {
+    const payload = jwt.verify(token, SECRET_KEY);
+    email = payload.email;
+  } catch (e) {
+    return res.status(401).send("Invalid token");
   }
   const existingUser = await userCollection.findOne({ email: email });
   if (existingUser) {
@@ -238,6 +244,32 @@ app.post("/logout", (req, res) => {
     res.send("logout successfully");
   } catch (error) {
     console.log("error", error);
+  }
+});
+
+app.post("/verify", async (req, res) => {
+  const db = client.db("bookworm");
+  const userCollection = db.collection("users");
+  const token = req.cookies.token;
+  console.log(token);
+  if (!token) {
+    return res.status(401).send("Authentication required");
+  }
+  let email;
+  try {
+    const payload = jwt.verify(token, SECRET_KEY);
+    email = payload.email;
+  } catch (e) {
+    return res.status(401).send("Invalid token");
+  }
+  console.log(email);
+  const existingUser = await userCollection.findOne({ email: email });
+  if (existingUser) {
+    console.log("user is seen");
+    res.send({ name: existingUser.name, email: existingUser.email });
+    console.log({ name: existingUser.name, email: existingUser.email });
+  } else {
+    res.status(400).send("please register");
   }
 });
 
